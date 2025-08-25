@@ -34,6 +34,16 @@ export const GET_KPIS = gql`
   }
 `;
 
+export const GET_KPI_SUMMARY = gql`
+  query GetKPISummary {
+    kpiSummary {
+      totalStock
+      totalDemand
+      fillRate
+    }
+  }
+`;
+
 export const UPDATE_DEMAND = gql`
   mutation UpdateDemand($id: String!, $demand: Int!) {
     updateDemand(id: $id, demand: $demand) {

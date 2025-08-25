@@ -28,6 +28,12 @@ class KPI:
     stock: int
     demand: int
 
+@strawberry.type
+class KPISummary:
+    totalStock: int
+    totalDemand: int
+    fillRate: float
+
 # Sample data
 warehouses_data = [
     {"code": "BLR-A", "name": "Bangalore Warehouse A", "city": "Bangalore", "country": "India"},
@@ -111,6 +117,24 @@ class Query:
         range_map = {"7d": 7, "14d": 14, "30d": 30}
         days = range_map.get(range, 7)
         return generate_kpi_data(days)
+    
+    @strawberry.field
+    def kpiSummary(self) -> KPISummary:
+        total_stock = sum(p["stock"] for p in products_data)
+        total_demand = sum(p["demand"] for p in products_data)
+        
+        if total_demand == 0:
+            fill_rate = 100.0
+        else:
+            # Fill Rate = (sum(min(stock, demand)) / sum(demand)) * 100%
+            fulfillable_demand = sum(min(p["stock"], p["demand"]) for p in products_data)
+            fill_rate = (fulfillable_demand / total_demand) * 100
+        
+        return KPISummary(
+            totalStock=total_stock,
+            totalDemand=total_demand,
+            fillRate=round(fill_rate, 2)
+        )
 
 @strawberry.type
 class Mutation:

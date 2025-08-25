@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@apollo/client';
-import { GET_PRODUCTS, GET_WAREHOUSES, GET_KPIS } from '../graphql/queries';
+import { GET_PRODUCTS, GET_WAREHOUSES, GET_KPIS, GET_KPI_SUMMARY } from '../graphql/queries';
 import { Product, Warehouse, KPI, Filters } from '../types';
 import Header from './Header';
 import KPICards from './KPICards';
@@ -33,25 +33,12 @@ const Dashboard: React.FC = () => {
   const { data: kpisData } = useQuery(GET_KPIS, {
     variables: { range: filters.dateRange },
   });
+  const { data: kpiSummaryData } = useQuery(GET_KPI_SUMMARY);
 
   const products: Product[] = productsData?.products || [];
   const warehouses: Warehouse[] = warehousesData?.warehouses || [];
   const kpis: KPI[] = kpisData?.kpis || [];
-
-  // Calculate aggregated KPIs
-  const aggregatedKPIs = useMemo(() => {
-    const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
-    const totalDemand = products.reduce((sum, p) => sum + p.demand, 0);
-    const fillRate = totalDemand > 0 
-      ? (products.reduce((sum, p) => sum + Math.min(p.stock, p.demand), 0) / totalDemand) * 100 
-      : 0;
-
-    return {
-      totalStock,
-      totalDemand,
-      fillRate: Math.round(fillRate * 10) / 10,
-    };
-  }, [products]);
+  const kpiSummary = kpiSummaryData?.kpiSummary || { totalStock: 0, totalDemand: 0, fillRate: 0 };
 
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
@@ -93,9 +80,9 @@ const Dashboard: React.FC = () => {
 
         {/* KPI Cards */}
         <KPICards 
-          totalStock={aggregatedKPIs.totalStock}
-          totalDemand={aggregatedKPIs.totalDemand}
-          fillRate={aggregatedKPIs.fillRate}
+          totalStock={kpiSummary.totalStock}
+          totalDemand={kpiSummary.totalDemand}
+          fillRate={kpiSummary.fillRate}
         />
 
         {/* Chart Section */}
